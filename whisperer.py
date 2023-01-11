@@ -8,7 +8,7 @@ from nacl.bindings import crypto_box_beforenm
 from Crypto.Cipher import AES
 import base64
 import pprint
-from encoders import *
+#from encoders import *
 
 
 __all__ = ['Whisperer']
@@ -106,6 +106,8 @@ class Whisperer:
         Returns:
             curve25519 public key as byte array.
         '''
+        print('__addressToPk({0}, {1})', cls, address)
+
         return VerifyKey(decode_check('account', address)).to_curve25519_public_key()._public_key
 
 
@@ -128,15 +130,18 @@ class Whisperer:
 
         # SMS TEXT encoding, not implemented yet
         if enc == 1:
-            return EncodeGSM(msg)
+            return msg
+        #    return EncodeGSM(msg)
 
         # Sixbit ASCII, not implemented yet
         if enc == 2:
-            return EncodeSixbit(msg)
+            return msg
+        #    return EncodeSixbit(msg)
 
         # not implemented yet
         if enc == 3:
-            return Compress(msg)
+            return msg
+        #    return Compress(msg)
 
         # reserved, not implemented
         if enc == 4:
@@ -179,15 +184,24 @@ class Whisperer:
 
         # SMS TEXT encoding, not implemented yet
         if enc == 1:
-            return DecodeGSM(msg)
+            if printable:
+                return Printable(msg)
+            return msg
+            #return DecodeGSM(msg)
 
         # Sixbit ASCII, not implemented yet
         if enc == 2:
-            return DecodeSixbit(msg)
+            if printable:
+                return Printable(msg)
+            return msg
+            #return DecodeSixbit(msg)
 
         # not implemented yet
         if enc == 3:
-            return Decompress(msg)
+            if printable:
+                return Printable(msg)
+            return msg
+            #return Decompress(msg)
 
         # reserved, not implemented
         if enc == 4:
@@ -255,12 +269,17 @@ class Whisperer:
         Returns:
             List of encrypted message blocks (byte arrays).
         '''
+        print('__encrypt')
+
         encrypted = []
         for i in range(0, len(blocks)):
             iv = (int.from_bytes(baseIV, 'big') + i).to_bytes(17, 'big')[-16:]
             cypher = AES.new(k, AES.MODE_CBC, iv)
             encrypted += [cypher.encrypt(blocks[i])]
 
+
+        print ('\n  - cypher: {}', cypher)
+        print ('\n  - encrypted: {}', encrypted)
         return encrypted
 
 
@@ -274,9 +293,14 @@ class Whisperer:
             k: The shared secret.
             IV: The initialization vector.
         '''
+        
+        print('__decrypt')
+
         cypher = AES.new(k, AES.MODE_CBC, IV)
         decrypted = cypher.decrypt(encrypted)
 
+        print ('\n  - cypher: {}', cypher)
+        print ('\n  - decrypted: {}', decrypted)
         return decrypted
 
 
@@ -352,8 +376,8 @@ class Whisperer:
 
         # calculate the shared secret according to X25519
         k = crypto_box_beforenm(pk, self.__sk)
-        if DEBUG:
-            print('\nShared secret = {}'.format(base64.b16encode(k).decode()))
+        # if DEBUG:
+        print('\nShared secret = {}'.format(base64.b16encode(k).decode()))
 
         return k
 
@@ -372,6 +396,11 @@ class Whisperer:
             The return value. True if sending was successful, False otherwise.
         '''
 
+        print('\nwhisperer.Send')
+        print('\n  - self: {}'.format(self.__address))
+        print('\n  - address: {}', address)
+        print('\n  - encoding: {}', encoding)
+
         if address == self.__address:
             print('\nError: sending to yourself is not yet supported!')
             return False
@@ -381,8 +410,8 @@ class Whisperer:
 
         # encapsulate message
         blocks = Whisperer.__encapsulate(encoded, encoding)
-        if DEBUG:
-            DumpBlocks(blocks)
+        # if DEBUG:
+        DumpBlocks(blocks)
 
         # calculate shared secret
         k = self.__shared(address)
@@ -393,13 +422,13 @@ class Whisperer:
         # build the IV
         pk = Whisperer.__addressToPk(address)
         IV = (int.from_bytes(pk[0:16], 'big') + sequence_number).to_bytes(17, 'big')[-16:]
-        if DEBUG:
-            print('Base IV = {}'.format(base64.b16encode(IV).decode()))
+        # if DEBUG:
+        print('whisperer.Send: Base IV = {}'.format(base64.b16encode(IV).decode()))
 
         # encrypt
         encrypted = Whisperer.__encrypt(blocks, k, IV)
-        if DEBUG:
-            DumpEncrypted(encrypted)
+        # if DEBUG:
+        DumpEncrypted(encrypted)
 
         # actually perform the sending of the encrypted blocks
         return self.__send(address, encrypted, sequence_number)
@@ -460,8 +489,8 @@ class Whisperer:
             encrypted = base64.b64decode(t.get('memo'))
             block = Whisperer.__decrypt(encrypted, k, IV)
 
-            if DEBUG:
-                DumpBlocks([block])
+            # if DEBUG:
+            DumpBlocks([block])
 
             # check if we have found the message
             l = Whisperer.__getLength(block)
@@ -483,8 +512,8 @@ class Whisperer:
                 sender.append(t.get('source_account'))
                 dates.append(t.get('created_at'))
 
-        if DEBUG:
-            print(encodings)
+        # if DEBUG:
+        print(encodings)
 
         # assemble the encoded messages
         messages = [b''.join(reversed(m)) for m in messages]

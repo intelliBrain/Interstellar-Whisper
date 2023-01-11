@@ -54,12 +54,29 @@ if __name__ == '__main__':
 
     banner()
 
+    #sender
+    #Public Key
+    #GCHI3PNOQAHQIL6L6TALNM33LOYQ7HBZKGZZTRTQSHBNDHCXL6S6PYBE
+    #Secret Key
+    #SDRJON4EOLUJDTTPAESQYTU67VEQR7RBPYRFWZELLK3YJ5GKJHIYOYZM
+
+    sender_secret ='SDRJON4EOLUJDTTPAESQYTU67VEQR7RBPYRFWZELLK3YJ5GKJHIYOYZM'
+    receiver_secret = ''
+
+
+    alice_secret: 'SC7G2Y4DAGF3ARCEDGYYW4CR7E3RSOCDHMOLRRWOOWSIUILIOED6DLDV'
+    alice_public: 'GCU2RRJHYBEIP6R6SJHLTCC32FVFGATYMTYB3ZBKT3OMPZLCTVSS7ZDH'
+
+    bob_secret: 'SDVYV44C63H4S6W4FT4SBNML3C4YNUA75Z4DZBDP6OBBEZUREBMP3KIP'
+    bob_public: 'GD2TA2JCQTM6ILRQB2JL3GIZSUKHVU5MDJSHRLM7VMNORLT6SZB72TIY'
+
     # Get cmdline arguments
     arguments = docopt(__doc__, version = 'Interstellar Whisper 0.1')
 
     # Load seed and kreate keypair
     try:
-        password = getpass('Enter password: ')
+        # password = getpass('Enter password: ')
+        password='aaaa1111'
     except KeyboardInterrupt:
         print()
         exit(-1)
@@ -69,6 +86,10 @@ if __name__ == '__main__':
 
     # Create a Whisperer instance
     kp = Keypair.from_seed(seed)
+    #kp = Keypair.from_seed(sender_secret)
+
+    print('\nsecret: {}', kp.seed())
+
     W = Whisperer(kp)
 
     # Parse arguments
